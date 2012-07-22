@@ -1,0 +1,157 @@
+= (('tag:large:completion_proc'))
+
+: author
+  no6v (Nobuhiro IMAI)
+
+: institution
+  ((*RubyKansai*))
+
+: date
+  (('tag:blue:Sat')), 21 Jul 2012
+
+: allotted-time
+  30m
+
+: theme
+  readline
+
+= require "readline"
+
+* line edit (←→)
+
+* history (↑↓)
+
+* completion (Tab)
+
+= line edit
+
+  # coderay ruby
+
+  Readline.readline("⚡ ")
+
+  ⚡ ←→
+
+= history
+
+  # coderay ruby
+
+  Readline.readline("⚡ ", true)
+
+  ⚡ Readline::HISTORY.clear
+  ⚡ Readline::HISTORY << "a"
+  ⚡ Readline::HISTORY << "b"
+  ⚡ ↑↓
+
+= completion
+
+  # coderay ruby
+
+  Readline.completion_proc
+  Readline.completion_proc =
+    ->(word){%w[word1 word2 ...]}
+
+= demo
+
+  # image
+  # src = rabbit/image/readline-images/nokton.jpg
+  # relative_width = 100
+
+= memo of demo
+
+* github.com/jugyo/earthquake
+* github.com/no6v/rubykansai55/blob/master/completion_proc.rb
+
+= fat man in readline
+
+  # coderay ruby
+
+  puts Readline.
+    methods(false).
+    grep(->m{/[=?]$/!~m}).
+    sort_by(&:size).
+    reverse
+  # refs hp12c http://bit.ly/QnKcDS
+
+= ((' '))
+
+  # image
+  # src = rabbit/image/readline-images/ruby-trunk-changes-r36408.png
+  # relative_width = 100
+  # caption = GJ! Thanks!! http://bit.ly/QnFG8r
+
+= break
+
+  # image
+  # src = rabbit/image/readline-images/beni.jpg
+  # relative_width = 100
+
+= Array-like object
+
+  # coderay ruby
+
+  Readline::HISTORY.class # => Object
+  Readline::HISTORY.singleton_methods(false) # =>
+   [:to_s, :[], :[]=, :<<, :push, :pop,
+    :shift, :each, :length, :size, :empty?,
+    :delete_at, :clear]
+  Enumerable === Readline::HISTORY # => true
+
+= but, somethings lack...
+
+* unshift(*obj)
+* last
+  * first(n)/last(n)
+* delete_if{|x| ... }
+
+= HISTORY.delete_if
+
+  # coderay ruby
+
+  require "readline"
+
+  class << Readline::HISTORY
+    def delete_if(&block)
+      return enum_for(__method__) unless block
+      raise SecurityError if $SAFE == 4
+      i = 0
+      while (size > i) do
+        break unless entry = self[i]
+        if block.call(entry)
+          delete_at(i)
+        else
+          i += 1
+        end
+      end
+      return self
+    end
+  end
+
+= hist_delete_if
+
+  # coderay C
+
+  static VALUE
+  hist_delete_if(VALUE self)
+  {
+    HIST_ENTRY *entry;
+    int i = 0;
+
+    RETURN_ENUMERATOR(self, 0, 0);
+
+    rb_secure(4);
+    while (history_length > i) {
+      entry = history_get(history_get_offset_func(i));
+      if (entry == NULL) break;
+      if (RTEST(rb_yield(rb_locale_str_new_cstr(entry->line))))
+        rb_remove_history(i);
+      else
+        i++;
+    }
+    return self;
+  }
+
+= Thanks & Q?
+
+  # image
+  # src = rabbit/image/readline-images/canele.jpg
+  # relative_width = 100
